@@ -247,6 +247,7 @@ class PlantGateway:
         poller = MiFloraPoller(sensor_config.mac, BluepyBackend)
         if self.announced_sensor == False:
             self.announce_sensor(sensor_config, poller)
+        self._publish(sensor_config, poller)
 
     def process_all(self):
         """Get data from all sensors."""
@@ -281,6 +282,7 @@ class PlantGateway:
                         logging.exception(msg)
                         print(msg)
 
+        self.announced_sensor=True
         # return sensors that could not be processed after max_retry
         return next_list
 

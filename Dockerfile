@@ -9,13 +9,12 @@ RUN apt-get update \
 && rm -rf /var/lib/apt/lists/* 
 
 
-COPY scripts/run.sh scripts/run.sh
+COPY scripts/run.sh /scripts/run.sh
 COPY plantgw /plantgateway/plantgw
 COPY requirements.txt /plantgateway/requirements.txt
 COPY plantgateway /plantgateway/plantgateway
 
 RUN cd /plantgateway \
-&& pip install -r requirements.txt \
-&& git apply pr-39.patch
+&& pip install -r requirements.txt
 
-CMD ["scripts/run.sh"]
+CMD ["/scripts/run.sh"]

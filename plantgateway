@@ -29,13 +29,12 @@ def main():
     signal.signal(signal.SIGINT, signal_handler) # Or whatever signal
 
     while True:
-        frequency=pg.get_frequency()
         failed_sensors = pg.process_all()
         if len(failed_sensors) > 0:
             print('Could not get data from {}sensor(s): {}.'.format(
                 len(failed_sensors),
                 SensorConfig.get_name_string(failed_sensors)))
-        time.sleep(frequency)
+        time.sleep(pg.get_frequency())
 
     pg.stop_client()
     # only count the sensors that are NOT fail silent
