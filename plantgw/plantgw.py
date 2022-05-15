@@ -81,6 +81,7 @@ class Configuration:
         self.mqtt_timestamp_format = None  # type: Optional[str]
         self.mqtt_discovery_prefix = None  # type: Optional[str]
         self.sensors = []  # type: List[SensorConfig]
+        self.frequency = 300
 
         if 'port' in config['mqtt']:
             self.mqtt_port = config['mqtt']['port']
@@ -112,6 +113,9 @@ class Configuration:
 
         if 'discovery_prefix' in config['mqtt']:
             self.mqtt_discovery_prefix = config['mqtt']['discovery_prefix']
+
+        if 'frequency' in config:
+            self.mqtt_timestamp_format = config['frequency']
 
     @staticmethod
     def _configure_logging(config):
@@ -176,6 +180,10 @@ class PlantGateway:
         logging.info('loaded config file from %s', config_file_path)
         self.mqtt_client = None
         self.connected = False  # type: bool
+        self.announced_sensor = False
+
+    def get_frequency(self):
+            return self.config.frequency
 
     def start_client(self):
         """Start the mqtt client."""
@@ -237,7 +245,8 @@ class PlantGateway:
         """Get data from one Sensor."""
         logging.info('Getting data from sensor %s', sensor_config.get_topic())
         poller = MiFloraPoller(sensor_config.mac, BluepyBackend)
-        self.announce_sensor(sensor_config)
+        if self.announced_sensor == False:
+            self.announce_sensor(sensor_config)
         self._publish(sensor_config, poller)
 
     def process_all(self):
