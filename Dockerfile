@@ -1,4 +1,4 @@
-FROM python:3.5
+FROM python:3.9
 
 
 
@@ -8,13 +8,14 @@ RUN apt-get update \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/* 
 
-
-COPY scripts/run.sh /scripts/run.sh
-COPY plantgw /plantgateway/plantgw
 COPY requirements.txt /plantgateway/requirements.txt
-COPY plantgateway /plantgateway/plantgateway
-
 RUN cd /plantgateway \
 && pip install -r requirements.txt
+
+COPY scripts/run.sh /scripts/run.sh
+RUN chmod u+x /scripts/run.sh
+
+COPY plantgw /plantgateway/plantgw
+COPY plantgateway /plantgateway/plantgateway
 
 CMD ["/scripts/run.sh"]

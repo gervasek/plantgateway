@@ -115,7 +115,7 @@ class Configuration:
             self.mqtt_discovery_prefix = config['mqtt']['discovery_prefix']
 
         if 'frequency' in config:
-            self.mqtt_timestamp_format = config['frequency']
+            self.frequency = config['frequency']
 
     @staticmethod
     def _configure_logging(config):
@@ -223,7 +223,7 @@ class PlantGateway:
             MQTTAttributes.BRIGHTNESS.value:   poller.parameter_value(MI_LIGHT),
             MQTTAttributes.MOISTURE.value:     poller.parameter_value(MI_MOISTURE),
             MQTTAttributes.CONDUCTIVITY.value: poller.parameter_value(MI_CONDUCTIVITY),
-            MQTTAttributes.TIMESTAMP.value:    datetime.now().isoformat(),
+            MQTTAttributes.TIMESTAMP.value:    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
         for key, value in data.items():
             logging.debug("%s: %s", key, value)
@@ -250,6 +250,7 @@ class PlantGateway:
         self._publish(sensor_config, poller)
 
     def process_all(self):
+        print("----------- process_all")
         """Get data from all sensors."""
         next_list = self.config.sensors
         timeout = 1  # initial timeout in seconds
@@ -306,9 +307,10 @@ class PlantGateway:
                 'unique_id':           '{}_{}'.format(device_id, attribute.value),
                 'state_topic':         self._get_state_topic(sensor_config),
                 'unit_of_measurement': UNIT_OF_MEASUREMENT[attribute],
+                'state_class': 'measurement',
                 'value_template':      '{{value_json.'+attribute.value+'}}',
                 'device':              {
-                    'identifiers':     '[ {} ]'.format(device_id),
+                    'identifiers':     [ device_id ],
                     'name':            device_name,
                     'model':           device_model,
                     'manufacturer':    'Xiaomi',
@@ -322,5 +324,18 @@ class PlantGateway:
                 payload['device_class'] = DEVICE_CLASS[attribute]
 
             json_payload = json.dumps(payload)
-            self.mqtt_client.publish(topic, json_payload, qos=1, retain=False)
+            self.mqtt_client.publish(topic, json_payload, qos=1, retain=True)
             logging.info('sent sensor config to topic %s', topic)
+
+    def subscribe(self):
+        self.start_client()
+        print("----------- subscribe")
+        def on_message(client, userdata, msg):
+
+            print(f"Refresh asked, start process all...")
+            self.process_all()
+
+        self.mqtt_client.on_message=on_message
+        self.mqtt_client.subscribe(f"{ self.config.mqtt_prefix }/refresh")
+
+        #self.mqtt_client.loop_forever()
